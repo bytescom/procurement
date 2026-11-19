@@ -1,0 +1,150 @@
+# Configuration for Company A
+# Mining operations of a chemicals group (ZAR, 2021 to 2024)
+
+company:
+  id: "A"
+  name: "Company A"
+  description: "Mining operations of a chemicals group"
+  reporting_currency: "ZAR"
+
+tax_settings:
+  erp_amounts_are_net: true
+  tool_amounts_are_gross: true
+  default_vat_rate: 0.15
+
+spend_rules:
+  invoice_tool_statuses:
+    cancelled: ["Cancelled"]
+    not_approved: ["On Hold", "Rejected"]
+    approved_or_paid: ["Approved", "Paid"]
+  erp_default_include: true
+
+classification_engine:
+  semantic_enabled: false
+  gemini:
+    enabled: true
+    confidence_threshold: 0.75
+    max_requests: 50
+    timeout_seconds: 30
+    max_retries: 2
+    cache_path: output/cache/gemini_A.sqlite3
+    price_input_per_million: 0.75
+    price_output_per_million: 3.75
+
+record_id_rules:
+  erp_prefix: "ERP:"
+  tool_prefix: "TOOL:"
+
+taxonomy:
+  levels:
+    - "category_l1"
+    - "category_l2"
+    - "category_l3"
+
+datasets:
+  erp:
+    name: "erp_goods_receipts"
+    path: "data/company_A/erp_goods_receipts.csv"
+    purpose: "SAP goods receipt lines (PO, materials, services, net value in ZAR)"
+    id_column: "line_id"
+    columns:
+      id: "line_id"
+      source_system: "source_system"
+      spend_type: "spend_type"
+      po_number: "po_number"
+      po_item: "po_item"
+      receipt_document: "receipt_document"
+      receipt_item: "receipt_item"
+      posting_date: "posting_date"
+      material_number: "material_number"
+      material_description: "material_short_text"
+      service_description: "service_short_text"
+      material_type: "material_type"
+      quantity: "quantity"
+      uom: "uom"
+      po_uom: "po_uom"
+      amount: "value_zar"
+      unit_cost: "unit_cost_zar"
+      currency: "document_currency"
+      vendor_id: "vendor_id"
+      supplier_name: "supplier_name"
+      site_code: "site_code"
+      site_name: "site_name"
+      cost_centre: "cost_centre"
+      opex_capex: "opex_capex"
+      contract_status: "contract_status"
+      contract_number: "contract_number"
+    required_columns:
+      - "line_id"
+      - "source_system"
+      - "po_number"
+      - "posting_date"
+      - "quantity"
+      - "value_zar"
+      - "supplier_name"
+
+  invoice_tool:
+    name: "invoice_tool_export"
+    path: "data/company_A/invoice_tool_export.csv"
+    purpose: "Accounts payable invoice tool export lines"
+    id_column: "tool_record_id"
+    columns:
+      id: "tool_record_id"
+      invoice_number: "invoice_number"
+      invoice_date: "invoice_date"
+      supplier_name: "supplier_name_as_captured"
+      po_reference: "po_reference"
+      description: "line_text"
+      quantity: "quantity"
+      gross_amount: "gross_amount"
+      vat_rate: "vat_rate"
+      currency: "currency"
+      status: "status"
+    status_mapping:
+      valid:
+        - "Paid"
+        - "Approved"
+      cancelled:
+        - "Cancelled"
+      not_approved:
+        - "On Hold"
+        - "Rejected"
+    required_columns:
+      - "tool_record_id"
+      - "invoice_number"
+      - "supplier_name_as_captured"
+      - "gross_amount"
+      - "vat_rate"
+      - "status"
+
+  labels:
+    name: "labels_A"
+    path: "data/company_A/labels_A.csv"
+    purpose: "Golden category labels and client golden supplier and item keys for ERP lines"
+    id_column: "record_id"
+    columns:
+      record_id: "record_id"
+      category_l1: "category_l1"
+      category_l2: "category_l2"
+      category_l3: "category_l3"
+      supplier_key: "supplier_key"
+      item_key: "item_key"
+    required_columns:
+      - "record_id"
+      - "category_l1"
+      - "category_l2"
+      - "category_l3"
+      - "supplier_key"
+
+  taxonomy:
+    name: "taxonomy_A"
+    path: "data/company_A/taxonomy_A.csv"
+    purpose: "Company A 3-level taxonomy hierarchy (5 L1, 24 L2, 40 L3)"
+    columns:
+      l1: "category_l1"
+      l2: "category_l2"
+      l3: "category_l3"
+    required_columns:
+      - "category_l1"
+      - "category_l2"
+      - "category_l3"

@@ -1,0 +1,61 @@
+# Template only: replace every TODO value with headers and paths from the C files.
+# The C test files are not present in this workspace, so this config is not runnable yet.
+
+company:
+  id: "C"
+  name: "Company C"
+  reporting_currency: "USD"
+
+# The generic pipeline expects this single transaction dataset and a net USD amount.
+transaction_dataset: invoice_lines
+
+taxonomy:
+  levels:
+    - "category_l1"
+    - "category_l2"
+    - "category_l3"
+    - "category_l4"
+
+spend_rules:
+  approved_or_paid_statuses: []
+  cancelled_statuses: []
+  not_approved_statuses: []
+  non_procurement_description_patterns: [] # TODO: add clear exclusions supported by the C data
+
+classification_engine:
+  semantic_enabled: false
+  gemini:
+    enabled: true
+    confidence_threshold: 0.75
+    max_requests: 50
+    timeout_seconds: 30
+    max_retries: 2
+    cache_path: output/cache/gemini_C.sqlite3
+    price_input_per_million: 0.75
+    price_output_per_million: 3.75
+
+datasets:
+  invoice_lines:
+    name: "company_c_invoice_lines"
+    path: "data/company_C/invoice_lines.csv" # TODO: replace with supplied filename
+    id_column: "TODO_RECORD_ID_COLUMN"
+    columns:
+      id: "TODO_RECORD_ID_COLUMN"
+      amount: "TODO_NET_USD_AMOUNT_COLUMN"
+      description: "TODO_DESCRIPTION_COLUMN"
+      supplier_id: "TODO_SUPPLIER_ID_COLUMN"
+      supplier_name: "TODO_SUPPLIER_NAME_COLUMN"
+      item_id: "TODO_ITEM_ID_COLUMN"
+      material_description: "TODO_ITEM_DESCRIPTION_COLUMN"
+      uom: "TODO_UNIT_COLUMN"
+    required_columns: [] # TODO: list required source columns after inspecting the file
+
+  taxonomy:
+    name: "company_c_taxonomy"
+    path: "data/company_C/taxonomy_C.csv" # TODO: replace with supplied filename
+    columns:
+      l1: "TODO_TAXONOMY_LEVEL_1_COLUMN"
+      l2: "TODO_TAXONOMY_LEVEL_2_COLUMN"
+      l3: "TODO_TAXONOMY_LEVEL_3_COLUMN"
+      l4: "TODO_TAXONOMY_LEVEL_4_COLUMN"
+    required_columns: [] # TODO: list the levels present in the supplied taxonomy

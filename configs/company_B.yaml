@@ -1,0 +1,138 @@
+# Configuration for Company B
+# Metal packaging manufacturer (USD, 2024)
+
+company:
+  id: "B"
+  name: "Company B"
+  description: "Metal packaging manufacturer across 8 ERPs and 25 currencies"
+  reporting_currency: "USD"
+
+currency_settings:
+  reporting_currency: "USD"
+  rate_definition: "units_per_usd"
+  usd_rate: 1.0
+  fx_fallback_order:
+    - "invoice_month"
+    - "posting_month"
+
+spend_rules:
+  # B has no invoice approval/status field. Exclude only clear intercompany
+  # account descriptions; keep ambiguous short account codes for review.
+  non_procurement_description_patterns:
+    - "(?i)^I/C\\s*Payables?$"
+    - "(?i)^IC\\d+$"
+
+classification_engine:
+  semantic_enabled: false
+  gemini:
+    enabled: true
+    confidence_threshold: 0.75
+    max_requests: 50
+    timeout_seconds: 30
+    max_retries: 2
+    cache_path: output/cache/gemini_B.sqlite3
+    price_input_per_million: 0.75
+    price_output_per_million: 3.75
+
+record_id_rules:
+  prefix: ""  # Company B uses raw line_id
+  id_column: "line_id"
+
+taxonomy:
+  levels:
+    - "category_l1"
+    - "category_l2"
+    - "category_l3"
+
+datasets:
+  invoices:
+    name: "invoice_lines"
+    path: "data/company_B/invoice_lines.csv"
+    purpose: "Accounts payable invoice lines from 8 ERPs in 8 regions"
+    id_column: "line_id"
+    columns:
+      id: "line_id"
+      source_system: "source_system"
+      region: "region"
+      invoice_number: "invoice_number"
+      invoice_line: "invoice_line"
+      posting_date: "posting_date"
+      invoice_date: "invoice_date"
+      due_date: "due_date"
+      paid_date: "paid_date"
+      description: "line_description"
+      item_id: "material_number"
+      quantity: "quantity"
+      currency: "currency"
+      currency_rate: "currency_rate"
+      amount: "line_amount"
+      cost_centre: "cost_centre"
+      gl_account: "gl_account"
+      gl_account_description: "gl_account_description"
+      supplier_id: "vendor_id"
+      supplier_type: "supplier_type"
+      document_type: "document_type"
+      po_number: "po_number"
+      po_line: "po_line"
+      po_type: "po_type"
+      plant: "plant"
+      company_code: "company_code"
+      payment_terms: "payment_terms"
+      transport_flag: "transport_flag"
+    required_columns:
+      - "line_id"
+      - "source_system"
+      - "region"
+      - "invoice_number"
+      - "invoice_line"
+      - "posting_date"
+      - "currency"
+      - "line_amount"
+      - "vendor_id"
+      - "document_type"
+
+  fx_rates:
+    name: "fx_rates_usd"
+    path: "data/company_B/fx_rates_usd.csv"
+    purpose: "Monthly exchange rates in units of local currency per 1 USD"
+    columns:
+      currency: "currency"
+      month: "month"
+      units_per_usd: "units_per_usd"
+    required_columns:
+      - "currency"
+      - "month"
+      - "units_per_usd"
+
+  seed_labels:
+    name: "seed_labels"
+    path: "data/company_B/seed_labels.csv"
+    purpose: "3,000 analyst-labelled lines with procurement inclusion and category tree"
+    id_column: "line_id"
+    columns:
+      id: "line_id"
+      include: "include"
+      exclusion_reason: "exclusion_reason"
+      category_l1: "category_l1"
+      category_l2: "category_l2"
+      category_l3: "category_l3"
+    required_columns:
+      - "line_id"
+      - "include"
+      - "exclusion_reason"
+      - "category_l1"
+      - "category_l2"
+      - "category_l3"
+
+  taxonomy:
+    name: "taxonomy_B"
+    path: "data/company_B/taxonomy_B.csv"
+    purpose: "Company B 3-level taxonomy hierarchy (9 L1, 25 L2, 40 L3)"
+    columns:
+      l1: "category_l1"
+      l2: "category_l2"
+      l3: "category_l3"
+    required_columns:
+      - "category_l1"
+      - "category_l2"
+      - "category_l3"
