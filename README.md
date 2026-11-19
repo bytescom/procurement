@@ -1,4 +1,4 @@
-# Cantill.ai Procurement Data & ML Assessment
+# Data & ML Assessment
 
 This repository contains a configuration-driven procurement pipeline for the supplied Company A and Company B data. It ingests configured CSVs, preserves source rows, normalizes amounts and dates, investigates cross-system matches and duplicates, applies explicit spend rules, resolves supplier/item keys, classifies against the configured taxonomy, and writes the assessment output schema.
 
@@ -8,16 +8,16 @@ From the project root, install dependencies and run both companies:
 
 ```powershell
 python -m pip install -r requirements.txt
-python -m src.pipeline --all --output-dir output --name candidate
+python -m src.pipeline --all --output-dir output --name pankaj
 ```
 
 Run one company or another config with:
 
 ```powershell
-python -m src.pipeline --config configs/company_A.yaml --output-dir output --name candidate
+python -m src.pipeline --config configs/company_A.yaml --output-dir output --name pankaj
 ```
 
-The pipeline resolves data paths from the project root discovered from `src/ingestion/loader.py`, so it can also be launched from another working directory with an absolute config path. Outputs are named `candidate__A.csv` and `candidate__B.csv`; audit tables are written to `output/audit/{company_id}/`.
+The pipeline resolves data paths from the project root discovered from `src/ingestion/loader.py`, so it can also be launched from another working directory with an absolute config path. Outputs are named `pankaj__A.csv` and `pankaj__B.csv`; audit tables are written to `output/audit/{company_id}/`.
 
 Each output uses the exact 11-column assessment schema in `output_template.csv`. The audit directory contains spend decisions, entity-resolution maps, row counts, preprocessing changes, classification diagnostics, held-out metrics, confusion matrices, Gemini routing reports, and matching or duplicate review tables. A/B category labels are used for training/validation/test partitions; held-out test labels never enter model fitting or Gemini prompts. Spend labels are post-run evaluation only.
 
@@ -28,7 +28,7 @@ The classifier is local first. For A and B, the local TF-IDF/logistic model is t
 The optional provider uses Google's `google-genai` SDK with model ID `gemini-3.8-flash`. Set `GEMINI_API_KEY` in the process environment to enable requests. The key is never stored in project config. Without it, the pipeline keeps local predictions and does not fail. A dry run reports bounded, deduplicated request and token/cost estimates without calling Gemini:
 
 ```powershell
-python -m src.pipeline --all --output-dir output --name candidate --gemini-dry-run
+python -m src.pipeline --all --output-dir output --name pankaj --gemini-dry-run
 ```
 
 Per-company thresholds, request budgets, timeout, retries, cache path, and current pricing assumptions are in the YAML `classification_engine` section. The SQLite cache key includes the model, transaction evidence, taxonomy candidates, and taxonomy levels. Gemini receives only the relevant fields for one unique uncertain transaction, not a dataset or row ID. Audit reports include routing outcomes and actual token usage when the API provides it.
@@ -46,8 +46,8 @@ Task data is confidential and must not be committed. `.gitignore` excludes the s
 Run regression and end-to-end checks with:
 
 ```powershell
-python -m unittest src.test_preprocessing src.test_matching src.test_pipeline -v
-python src/test_ingestion.py
+python -m unittest discover -s test -p "test_*.py" -v
+python test/test_ingestion.py
 ```
 
 See `APPROACH.md` for method and known limitations, and `DECISIONS.md` for assumptions.

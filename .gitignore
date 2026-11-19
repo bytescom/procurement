@@ -3,8 +3,8 @@ __pycache__/
 *.py[cod]
 data/company_A/
 data/company_B/
+data/company_C/
 data/Cantill_DataML_Task_Brief.pdf
 .env
 .cache/
-output/cache/
-output/
+/test/

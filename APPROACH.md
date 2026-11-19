@@ -1,23 +1,17 @@
-# Approach
+# Method
 
-I built one command to load the company files, clean the values, decide what to count, match likely duplicates, make supplier and item keys, and classify each included line. Company settings and column names are in YAML. The taxonomy is read from its CSV at run time.
+I process files A and B using a single command. YAML files inform the loader about the location of each file and which columns to use. The output contains one row for every input line.
 
-## Data and spend
+For file A, if an ERP receipt also appears in the invoice tool, I classify it as a `counted purchase`. I remove the VAT from the amounts in the tool and filter out confirmed duplicate entries. For file B, I convert the amounts into USD using either a specified rate or a monthly FX file. Since file B lacks an 'approval' field, I simply exclude entries explicitly identified as 'intercompany payables.' Duplicate invoice numbers are retained in the output to allow for subsequent verification.
 
-For A, I remove VAT from the invoice-tool gross amount and compare its lines with ERP receipts. I only mark a tool line as a duplicate when the matching evidence is strong; uncertain matches stay for review. ERP receipts are the canonical records. I use the configured invoice status to exclude cancelled, rejected and on-hold tool lines.
+Where supplier and item IDs are available, I utilize them. In the absence of IDs, I rely on text matching only if the text is an exact, normalized match. Cases involving ambiguity are left aside, as incorrect merges would be difficult to rectify. Consequently, a single actual supplier or item may be represented by multiple 'keys.'
 
-For B, I convert line amounts to USD using the source rate or the monthly FX file. There is no approval field, so I exclude only clear intercompany descriptions and keep repeated invoice numbers for review. Three B lines have no source amount; I leave their spend blank rather than inventing a value.
+The category tree is loaded from a taxonomy CSV file specific to each company. For both A and B, I train a TF-IDF/logistic regression model using labels derived from the existing input records. I use a `validation split` to determine the 'confidence threshold' and maintain a separate 'held-out split' for reporting scores. If no relevant label is found, the tool employs a 'taxonomy-text fallback'. While Gemini can be enabled to handle ambiguous entries, I have not performed any live API calls.
 
-I prefer source supplier and item IDs. Where an ID is missing, I use exact normalized text evidence. I do not automatically merge fuzzy supplier or item matches. This can leave the same real entity under different source IDs.
+In a recent 'held-out run', the model's raw accuracy—prior to applying the threshold—was as follows: for A, 99.3%, 95.8%, and 95.0% at levels L1–L3; and for B, 90.6%, 89.7%, and 87.3%. Coverage above the threshold was 55.8% for A and 61.0% for B. Scores based solely on the taxonomy were 34.0%, 4.8%, and 2.8% for A; and 46.6%, 45.9%, and 27.0% for B. These are 'held-out' results. I have not tested A with all labels hidden, nor have I run the process for company C.
 
-## Classification
+On this machine, the classification step took approximately 91 seconds for A and 41 seconds for B. Based on a 'dry run' (test run), the total cost for 106,577 rows is estimated at approximately $0.073, which translates to $0.00068 per 1,000 rows. There is a limit of 50 requests per company. This is merely an estimate; the actual cost for Gemini was $0, as I did not make any API calls.
 
-For A and B, I train a TF-IDF/logistic model on the labelled rows that match the current input records. I choose the confidence threshold on validation data and report results on a held-out test split grouped by identical description text. If there are no usable labels, I use taxonomy token matching. Gemini is an optional fallback for uncertain included lines; its responses are checked against the loaded taxonomy.
+## Company C
 
-On the latest grouped held-out run, raw TF-IDF/logistic accuracy before the confidence threshold was A: 99.3%, 95.8%, 95.0% at L1-L3; B: 90.6%, 89.7%, 87.3%. The corresponding accepted coverage was 55.8% for A and 61.0% for B. The taxonomy-only classifier scored A: 34.0%, 4.8%, 2.8%; B: 46.6%, 45.9%, 27.0%. These are A/B held-out results, not a labels-hidden A result. I have not measured zero-label accuracy on A or accuracy on Company C.
-
-The measured classification stage took about 91 seconds for A and 41 seconds for B on this machine. The latest dry run estimated about $0.073 total across 106,577 A/B rows, or about $0.00068 per 1,000 rows, with a 50-request cap per company. This is a prompt-based estimate; no Gemini API calls or actual API costs were measured.
-
-## Limits
-
-The Company C YAML is a template because the C files and column names are not in the current data folder. I will map it to the supplied invoice and taxonomy headers when those files are available. Fresh A2/B2 IDs do not match the original label IDs, so those rows use the no-label fallback rather than the trained A/B model. The three missing B amounts remain unknown.
+I have not received the invoice file or the taxonomy (classification structure) for Company C; therefore, I have not processed it, nor have I generated any output for it. `configs/company_C.yaml` is merely a template; its 'TODO' fields must be replaced with actual file names and column names. There are no labeled examples available for Company C, so I plan to use my own tree structure along with an 'unlabeled classifier,' with Gemini serving as a fallback option. Once I have reviewed the fields for Company C, I will establish 'spend rules' for it. In three rows for Company C, the 'source amount' was not provided; consequently, I have left the values ​​for those expenses blank.
